@@ -12,17 +12,7 @@ defmodule Mailixir.Webhooks.Postmark do
 
   @impl true
   def verify(_raw_body, _decoded, headers, config) do
-    case Keyword.get(config, :basic_auth) do
-      nil ->
-        :ok
-
-      {user, password} ->
-        expected = "Basic " <> Base.encode64("#{user}:#{password}")
-
-        if secure_compare(expected, header(headers, "authorization") || ""),
-          do: :ok,
-          else: {:error, Mailixir.Webhook.invalid_signature(provider(), "basic auth credentials do not match")}
-    end
+    verify_basic_auth(headers, Keyword.get(config, :basic_auth), provider())
   end
 
   @impl true

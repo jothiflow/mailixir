@@ -29,6 +29,11 @@ defmodule Mailixir.Webhook do
   | `Mailixir.Webhooks.Mailjet`         | none offered by the provider                   |
   | `Mailixir.Webhooks.Brevo`           | none offered by the provider                   |
   | `Mailixir.Webhooks.SES`             | SNS envelope; verify SNS signatures upstream   |
+  | `Mailixir.Webhooks.SparkPost`       | HTTP basic auth or auth token header           |
+  | `Mailixir.Webhooks.Mailtrap`        | none offered by the provider                   |
+  | `Mailixir.Webhooks.MailPace`        | Ed25519 (`:public_key`)                        |
+  | `Mailixir.Webhooks.SMTP2GO`         | none offered by the provider                   |
+  | `Mailixir.Webhooks.Postal`          | RSA-SHA1 (`:public_key`)                       |
 
   Verification only runs when its config key is given, so unauthenticated
   parsing is possible but never silent: `verified?/2` tells you whether a
@@ -72,7 +77,16 @@ defmodule Mailixir.Webhook do
       alias Mailixir.{Error, Event}
 
       import Mailixir.Webhook,
-        only: [header: 2, unix: 1, iso8601: 1, event: 2, secure_compare: 2, invalid: 1, invalid: 2]
+        only: [
+          header: 2,
+          unix: 1,
+          iso8601: 1,
+          event: 2,
+          secure_compare: 2,
+          invalid: 1,
+          invalid: 2,
+          verify_basic_auth: 3
+        ]
 
       @impl Mailixir.Webhook
       def provider, do: unquote(provider)
@@ -165,6 +179,18 @@ defmodule Mailixir.Webhook do
   @doc "Builds an event; `fields` may include any `Mailixir.Event` key."
   @spec event(atom(), keyword()) :: Event.t()
   def event(provider, fields), do: struct!(Event, [provider: provider] ++ fields)
+
+  @doc "Checks an `Authorization: Basic` header against `{user, password}`; `nil` credentials skip the check."
+  @spec verify_basic_auth(headers(), {String.t(), String.t()} | nil, atom()) :: :ok | {:error, Error.t()}
+  def verify_basic_auth(_headers, nil, _provider), do: :ok
+
+  def verify_basic_auth(headers, {user, password}, provider) do
+    expected = "Basic " <> Base.encode64("#{user}:#{password}")
+
+    if secure_compare(expected, header(headers, "authorization") || ""),
+      do: :ok,
+      else: {:error, invalid_signature(provider, "basic auth credentials do not match")}
+  end
 
   @doc "Builds an `:invalid_payload` error."
   @spec invalid(atom(), String.t()) :: Error.t()
