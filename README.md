@@ -252,6 +252,19 @@ Config never appears in metadata. Add request or tenant ids with
 | `:batch_failure` | some emails in `deliver_many` failed (`details` per email) |
 | `:invalid_signature` / `:invalid_payload` | webhook verification / decoding failed |
 
+## Checking a provider for real
+
+`mix mailixir.smoke` sends a minimal and a full-featured email (attachment,
+inline image, tags, metadata) through every provider whose credentials are in
+the environment and prints the result per send:
+
+```sh
+MAILIXIR_SMOKE_FROM=you@yourdomain.com MAILIXIR_SMOKE_TO=inbox@example.com \
+RESEND_API_KEY=re_… POSTMARK_SERVER_TOKEN=… mix mailixir.smoke
+```
+
+`mix help mailixir.smoke` lists the variables for each provider.
+
 ## HTTP options
 
 Every HTTP adapter accepts `req_options: [...]`, merged last into the `Req`
