@@ -20,7 +20,6 @@ jobs:
             otp: "27"
           - elixir: "1.19"
             otp: "28"
-            lint: true
     env:
       MIX_ENV: test
     steps:
@@ -43,12 +42,28 @@ jobs:
       - run: mix compile --warnings-as-errors
       - run: mix test
 
-      - if: matrix.lint
-        run: mix format --check-formatted
-      - if: matrix.lint
-        run: mix credo --strict
-      - if: matrix.lint
-        run: mix docs --warnings-as-errors
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.19"
+          otp-version: "28"
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-lint-${{ hashFiles('mix.lock') }}
+          restore-keys: ${{ runner.os }}-lint-
+
+      - run: mix deps.get
+      - run: mix format --check-formatted
+      - run: mix credo --strict
+      - run: mix docs --warnings-as-errors
 
   dialyzer:
     runs-on: ubuntu-latest
