@@ -78,22 +78,11 @@ defmodule Mix.Tasks.Mailixir.Smoke do
 
     from = opts[:from] || System.get_env("MAILIXIR_SMOKE_FROM") || Mix.raise("set MAILIXIR_SMOKE_FROM or pass --from")
     to = opts[:to] || System.get_env("MAILIXIR_SMOKE_TO") || Mix.raise("set MAILIXIR_SMOKE_TO or pass --to")
-    only = opts |> Keyword.get_values(:adapter) |> Enum.map(&String.to_atom/1)
-
-    configured =
-      for {name, {adapter, required, optional}} <- @providers,
-          only == [] or name in only,
-          config = build_config(adapter, required, optional),
-          do: {name, config}
-
-    if configured == [], do: Mix.raise("no adapter has credentials in the environment; see `mix help mailixir.smoke`")
+    configured = configured_adapters(opts |> Keyword.get_values(:adapter) |> Enum.map(&String.to_atom/1))
 
     Mix.shell().info("Sending from #{from} to #{to} via: #{Enum.map_join(configured, ", ", &elem(&1, 0))}\n")
 
-    emails =
-      if opts[:minimal],
-        do: [{"minimal", minimal(from, to)}],
-        else: [{"minimal", minimal(from, to)}, {"full", full(from, to)}]
+    emails = [{"minimal", minimal(from, to)}] ++ if(opts[:minimal], do: [], else: [{"full", full(from, to)}])
 
     results =
       for {name, config} <- configured, {label, email} <- emails do
@@ -101,6 +90,21 @@ defmodule Mix.Tasks.Mailixir.Smoke do
       end
 
     Enum.each(results, &report/1)
+    summarize(results)
+  end
+
+  defp configured_adapters(only) do
+    configured =
+      for {name, {adapter, required, optional}} <- @providers,
+          only == [] or name in only,
+          config = build_config(adapter, required, optional),
+          do: {name, config}
+
+    if configured == [], do: Mix.raise("no adapter has credentials in the environment; see `mix help mailixir.smoke`")
+    configured
+  end
+
+  defp summarize(results) do
     failures = Enum.count(results, &match?({_, _, {:error, _}}, &1))
     Mix.shell().info("\n#{length(results) - failures}/#{length(results)} sends succeeded")
     if failures > 0, do: exit({:shutdown, 1})
