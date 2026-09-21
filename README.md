@@ -1,5 +1,9 @@
 # Mailixir
 
+[![CI](https://github.com/florentroques/mailixir/actions/workflows/ci.yml/badge.svg)](https://github.com/florentroques/mailixir/actions/workflows/ci.yml)
+[![Hex.pm](https://img.shields.io/hexpm/v/mailixir.svg)](https://hex.pm/packages/mailixir)
+[![Docs](https://img.shields.io/badge/hex-docs-blue.svg)](https://hexdocs.pm/mailixir)
+
 Transactional email for Elixir: one `Mailixir.Email`, one `deliver/2`,
 twenty-one adapters, webhook parsing back into one `Mailixir.Event`, and a
 dev mailbox — with `req` as the only required runtime dependency.
@@ -30,16 +34,16 @@ new()
 | Mailchimp Transactional (Mandrill) | `Mailixir.Adapters.Mandrill` | `:api_key` | | `Mailixir.Webhooks.Mandrill` |
 | Mailgun | `Mailixir.Adapters.Mailgun` | `:api_key`, `:domain` | | `Mailixir.Webhooks.Mailgun` |
 | Mailjet | `Mailixir.Adapters.Mailjet` | `:api_key`, `:secret_key` | ✓ (50/request) | `Mailixir.Webhooks.Mailjet` |
-| MailPace | `Mailixir.Adapters.MailPace` | `:api_key` | | |
-| Mailtrap | `Mailixir.Adapters.Mailtrap` | `:api_key` | | |
+| MailPace | `Mailixir.Adapters.MailPace` | `:api_key` | | `Mailixir.Webhooks.MailPace` |
+| Mailtrap | `Mailixir.Adapters.Mailtrap` | `:api_key` | | `Mailixir.Webhooks.Mailtrap` |
 | Microsoft Graph | `Mailixir.Adapters.MicrosoftGraph` | `:access_token` | | |
-| Postal | `Mailixir.Adapters.Postal` | `:api_key`, `:base_url` | | |
+| Postal | `Mailixir.Adapters.Postal` | `:api_key`, `:base_url` | | `Mailixir.Webhooks.Postal` |
 | Postmark | `Mailixir.Adapters.Postmark` | `:api_key` | ✓ (`/email/batch`) | `Mailixir.Webhooks.Postmark` |
 | Resend | `Mailixir.Adapters.Resend` | `:api_key` | | `Mailixir.Webhooks.Resend` |
 | Scaleway TEM | `Mailixir.Adapters.Scaleway` | `:secret_key`, `:project_id` | | |
 | SendGrid | `Mailixir.Adapters.SendGrid` | `:api_key` | | `Mailixir.Webhooks.SendGrid` |
-| SMTP2GO | `Mailixir.Adapters.SMTP2GO` | `:api_key` | | |
-| SparkPost | `Mailixir.Adapters.SparkPost` | `:api_key` | | |
+| SMTP2GO | `Mailixir.Adapters.SMTP2GO` | `:api_key` | | `Mailixir.Webhooks.SMTP2GO` |
+| SparkPost | `Mailixir.Adapters.SparkPost` | `:api_key` | | `Mailixir.Webhooks.SparkPost` |
 | SMTP | `Mailixir.Adapters.SMTP` | `:relay` (+ optional `gen_smtp` dep) | | |
 | sendmail | `Mailixir.Adapters.Sendmail` | — | | |
 | Failover chain | `Mailixir.Adapters.Fallback` | `:adapters` | | |
@@ -223,8 +227,9 @@ end
 Event types: `:accepted`, `:delivered`, `:deferred`, `:bounced` (with
 `bounce_type: :hard | :soft` and `reason`), `:complained`, `:opened`,
 `:clicked` (with `url`), `:unsubscribed`, `:rejected`, `:other`. Signatures
-are verified for Mailgun, SendGrid, Resend, Mandrill and Postmark (basic
-auth) whenever the key is configured.
+are verified for Mailgun, SendGrid, Resend, Mandrill, MailPace and Postal,
+and basic-auth / fixed-header checks for Postmark, SparkPost and SMTP2GO,
+whenever the key is configured.
 
 ## Telemetry
 

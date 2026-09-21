@@ -17,4 +17,4 @@ Initial release.
 - Development: Local (with `Mailixir.Plug.Mailbox` UI), Logger; Test with `Mailixir.TestAssertions`.
 
 ### Webhooks
-- `Mailixir.Webhook` and parsers for Mailgun, SendGrid, Resend, Postmark, Mailjet, Brevo, Mandrill and SES producing `Mailixir.Event`; signature verification where the provider offers it; `Mailixir.Plug.RawBody` body reader.
+- `Mailixir.Webhook` and parsers for Mailgun, SendGrid, Resend, Postmark, Mailjet, Brevo, Mandrill, SES, SparkPost, Mailtrap, MailPace, SMTP2GO and Postal producing `Mailixir.Event`; signature verification where the provider offers it; `Mailixir.Plug.RawBody` body reader.

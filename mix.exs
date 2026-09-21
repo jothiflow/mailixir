@@ -2,7 +2,7 @@ defmodule Mailixir.MixProject do
   use Mix.Project
 
   @version "0.1.0"
-  @source_url "https://github.com/florent/mailixir"
+  @source_url "https://github.com/florentroques/mailixir"
 
   def project do
     [
@@ -50,7 +50,7 @@ defmodule Mailixir.MixProject do
     [
       licenses: ["MIT"],
       links: %{"GitHub" => @source_url},
-      files: ~w(lib mix.exs README.md LICENSE CHANGELOG.md)
+      files: ~w(lib mix.exs README.md LICENSE CHANGELOG.md .formatter.exs)
     ]
   end
 
