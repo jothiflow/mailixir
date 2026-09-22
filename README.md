@@ -1,8 +1,6 @@
 # Mailixir
 
 [![CI](https://github.com/jothiflow/mailixir/actions/workflows/ci.yml/badge.svg)](https://github.com/jothiflow/mailixir/actions/workflows/ci.yml)
-[![Hex.pm](https://img.shields.io/hexpm/v/mailixir.svg)](https://hex.pm/packages/mailixir)
-[![Docs](https://img.shields.io/badge/hex-docs-blue.svg)](https://hexdocs.pm/mailixir)
 
 Transactional email for Elixir: one `Mailixir.Email`, one `deliver/2`,
 twenty-one adapters, webhook parsing back into one `Mailixir.Event`, and a
@@ -58,10 +56,12 @@ provider cannot express.
 
 ## Installation
 
+Mailixir is not on Hex yet; depend on a release tag:
+
 ```elixir
 def deps do
   [
-    {:mailixir, "~> 0.1"},
+    {:mailixir, github: "jothiflow/mailixir", tag: "v0.2.0"},
     {:gen_smtp, "~> 1.2"},  # only for Mailixir.Adapters.SMTP
     {:plug, "~> 1.14"}      # only for the dev mailbox UI / webhook raw-body plug
   ]

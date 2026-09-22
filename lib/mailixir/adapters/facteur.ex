@@ -22,6 +22,12 @@ defmodule Mailixir.Adapters.Facteur do
     * `:idempotency_key` — sent as the `Idempotency-Key` header. Reusing one
       returns the original message (HTTP 200 instead of 202) rather than
       sending twice, so a timed-out send is safe to retry.
+    * `:list_unsubscribe` — who owns the `List-Unsubscribe` headers.
+      Omitted or `:facteur`: Facteur's own one-click link, and a click
+      suppresses the recipient for the whole Facteur workspace. `:none`: no
+      headers (password resets, security alerts). `%{url: "https://…",
+      mailto: "…"}` (either or both): your own opt-out, e.g. a preference
+      centre. Facteur renders the headers and never sees those clicks.
 
   Accepting a message only queues it: per-recipient outcomes arrive later as
   webhooks, parsed by `Mailixir.Webhooks.Facteur`.
@@ -75,10 +81,15 @@ defmodule Mailixir.Adapters.Facteur do
       headers: HTTP.presence(email.headers),
       attachments: HTTP.presence(Enum.map(email.attachments, &attachment/1)),
       tags: HTTP.presence(email.tags),
-      metadata: HTTP.presence(email.metadata)
+      metadata: HTTP.presence(email.metadata),
+      list_unsubscribe: list_unsubscribe(email.provider_options[:list_unsubscribe])
     }
     |> HTTP.compact()
   end
+
+  defp list_unsubscribe(owner) when owner in [:facteur, :none], do: Atom.to_string(owner)
+  defp list_unsubscribe(link) when is_list(link), do: Map.new(link)
+  defp list_unsubscribe(other), do: other
 
   defp attachment(%Attachment{} = att) do
     HTTP.compact(%{

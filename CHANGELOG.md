@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- `Mailixir.Adapters.Facteur` accepts a `:list_unsubscribe` provider option
+  (`:facteur`, `:none`, or `%{url: …, mailto: …}`) for Facteur's
+  `list_unsubscribe` send field.
+
 ## 0.2.0 — 2026-09-22
 
 - `Mailixir.Adapters.Facteur` and `Mailixir.Webhooks.Facteur` for the self-hosted

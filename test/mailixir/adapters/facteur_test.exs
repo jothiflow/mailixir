@@ -73,6 +73,25 @@ defmodule Mailixir.Adapters.FacteurTest do
     assert {:ok, %Response{id: "6f0d"}} = Mailixir.deliver(minimal_email(), config)
   end
 
+  test "list_unsubscribe is passed through in Facteur's shape", %{stub: stub, config: config} do
+    Req.Test.stub(stub, fn conn ->
+      send(self(), {:list_unsubscribe, json_body(conn)["list_unsubscribe"]})
+      accepted(conn)
+    end)
+
+    for {option, sent} <- [
+          {:none, "none"},
+          {:facteur, "facteur"},
+          {[url: "https://acme.com/prefs"], %{"url" => "https://acme.com/prefs"}},
+          {%{url: "https://acme.com/prefs", mailto: "unsub@acme.com"},
+           %{"url" => "https://acme.com/prefs", "mailto" => "unsub@acme.com"}}
+        ] do
+      email = %{minimal_email() | provider_options: %{list_unsubscribe: option}}
+      assert {:ok, _} = Mailixir.deliver(email, config)
+      assert_received {:list_unsubscribe, ^sent}
+    end
+  end
+
   test "an idempotent replay is a success too", %{stub: stub, config: config} do
     Req.Test.stub(stub, fn conn ->
       Req.Test.json(Plug.Conn.put_status(conn, 200), %{"data" => %{"id" => "original"}})
