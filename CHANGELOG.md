@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- `Mailixir.Adapters.Facteur` and `Mailixir.Webhooks.Facteur` for the self-hosted
+  [Facteur](https://github.com/florentroques/facteur) delivery platform: tags and
+  metadata round-trip onto every event, `:idempotency_key` makes a retried send
+  safe, and the `Facteur-Signature` header (HMAC-SHA256 over `"<t>.<body>"`) is
+  verified when `secret:` is configured.
+
 ## 0.1.0 — 2026-09-21
 
 Initial release.

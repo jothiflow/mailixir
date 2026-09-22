@@ -30,6 +30,7 @@ new()
 |---|---|---|---|---|
 | Amazon SES v2 | `Mailixir.Adapters.SES` | `:access_key_id`, `:secret_access_key`, `:region` | | `Mailixir.Webhooks.SES` |
 | Brevo | `Mailixir.Adapters.Brevo` | `:api_key` | | `Mailixir.Webhooks.Brevo` |
+| Facteur (self-hosted) | `Mailixir.Adapters.Facteur` | `:api_key`, `:base_url` | | `Mailixir.Webhooks.Facteur` |
 | Gmail API | `Mailixir.Adapters.Gmail` | `:access_token` | | |
 | Mailchimp Transactional (Mandrill) | `Mailixir.Adapters.Mandrill` | `:api_key` | | `Mailixir.Webhooks.Mandrill` |
 | Mailgun | `Mailixir.Adapters.Mailgun` | `:api_key`, `:domain` | | `Mailixir.Webhooks.Mailgun` |
@@ -227,9 +228,9 @@ end
 Event types: `:accepted`, `:delivered`, `:deferred`, `:bounced` (with
 `bounce_type: :hard | :soft` and `reason`), `:complained`, `:opened`,
 `:clicked` (with `url`), `:unsubscribed`, `:rejected`, `:other`. Signatures
-are verified for Mailgun, SendGrid, Resend, Mandrill, MailPace and Postal,
-and basic-auth / fixed-header checks for Postmark, SparkPost and SMTP2GO,
-whenever the key is configured.
+are verified for Mailgun, SendGrid, Resend, Mandrill, MailPace, Postal and
+Facteur, and basic-auth / fixed-header checks for Postmark, SparkPost and
+SMTP2GO, whenever the key is configured.
 
 ## Telemetry
 
