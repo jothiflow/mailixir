@@ -1,7 +1,7 @@
 defmodule Mailixir.MixProject do
   use Mix.Project
 
-  @version "0.1.0"
+  @version "0.2.0"
   @source_url "https://github.com/florentroques/mailixir"
 
   def project do
@@ -42,8 +42,8 @@ defmodule Mailixir.MixProject do
   end
 
   defp description do
-    "Transactional email for Elixir: one Email struct, one deliver/2, adapters for SES, Brevo, Gmail, Mailgun, " <>
-      "Mailjet, Mandrill, Postmark, Resend, SendGrid, SparkPost, SMTP and more, webhook parsing, failover, dev mailbox."
+    "Transactional email for Elixir: one Email struct, one deliver/2, adapters for SES, Brevo, Facteur, Gmail, " <>
+      "Mailgun, Mailjet, Mandrill, Postmark, Resend, SendGrid, SparkPost, SMTP and more, webhook parsing, failover, dev mailbox."
   end
 
   defp package do
