@@ -3,7 +3,15 @@ defmodule Mailixir.Webhooks.Brevo do
   Parses [Brevo transactional webhooks](https://developers.brevo.com/docs/transactional-webhooks)
   (one event per request).
 
-  Brevo offers no signature; protect the endpoint at the web layer.
+  Verification: Brevo signs nothing, but it can authenticate its calls.
+  Configure one of these on the webhook and pass the same value here:
+
+    * `basic_auth: {user, password}` — Brevo sends credentials embedded in
+      the webhook URL (`https://user:password@example.com/brevo`) as an
+      `Authorization: Basic` header;
+    * `bearer_token: token` — set as `auth: %{type: "bearer", token: token}`
+      when creating the webhook through Brevo's API.
+
   `metadata` is decoded from the `X-Mailin-custom` header that
   `Mailixir.Adapters.Brevo` sets from `Mailixir.Email` metadata.
   """
@@ -11,6 +19,21 @@ defmodule Mailixir.Webhooks.Brevo do
   use Mailixir.Webhook, provider: :brevo
 
   alias Mailixir.Response
+
+  @impl true
+  def verify(_raw_body, _decoded, headers, config) do
+    with :ok <- verify_basic_auth(headers, Keyword.get(config, :basic_auth), provider()) do
+      verify_bearer(headers, Keyword.get(config, :bearer_token))
+    end
+  end
+
+  defp verify_bearer(_headers, nil), do: :ok
+
+  defp verify_bearer(headers, token) do
+    if secure_compare("Bearer " <> token, header(headers, "authorization") || ""),
+      do: :ok,
+      else: {:error, Mailixir.Webhook.invalid_signature(provider(), "bearer token does not match")}
+  end
 
   @impl true
   def parse(%{"event" => name} = data, _config) do

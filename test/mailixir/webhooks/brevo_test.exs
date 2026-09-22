@@ -61,4 +61,32 @@ defmodule Mailixir.Webhooks.BrevoTest do
   test "invalid payload" do
     assert {:error, %Error{reason: :invalid_payload}} = Webhook.parse(Brevo, "{}", [])
   end
+
+  describe "authentication" do
+    test "basic auth, as Brevo sends credentials embedded in the URL" do
+      config = [basic_auth: {"brevo", "s3cret"}]
+      good = [{"authorization", "Basic " <> Base.encode64("brevo:s3cret")}]
+      bad = [{"authorization", "Basic " <> Base.encode64("brevo:wrong")}]
+
+      assert {:ok, [_]} = Webhook.parse(Brevo, body("delivered"), good, config)
+      assert {:error, %Error{reason: :invalid_signature}} = Webhook.parse(Brevo, body("delivered"), bad, config)
+      assert {:error, %Error{reason: :invalid_signature}} = Webhook.parse(Brevo, body("delivered"), [], config)
+    end
+
+    test "bearer token" do
+      config = [bearer_token: "tok_123"]
+
+      assert {:ok, [_]} =
+               Webhook.parse(Brevo, body("delivered"), [{"Authorization", "Bearer tok_123"}], config)
+
+      assert {:error, %Error{reason: :invalid_signature, message: "bearer token does not match"}} =
+               Webhook.parse(Brevo, body("delivered"), [{"authorization", "Bearer nope"}], config)
+
+      assert {:error, %Error{reason: :invalid_signature}} = Webhook.parse(Brevo, body("delivered"), [], config)
+    end
+
+    test "nothing is checked without a configured credential" do
+      assert {:ok, [_]} = Webhook.parse(Brevo, body("delivered"), [])
+    end
+  end
 end

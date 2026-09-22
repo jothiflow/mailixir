@@ -61,7 +61,7 @@ Mailixir is not on Hex yet; depend on a release tag:
 ```elixir
 def deps do
   [
-    {:mailixir, github: "jothiflow/mailixir", tag: "v0.2.0"},
+    {:mailixir, github: "jothiflow/mailixir", tag: "v0.2.1"},
     {:gen_smtp, "~> 1.2"},  # only for Mailixir.Adapters.SMTP
     {:plug, "~> 1.14"}      # only for the dev mailbox UI / webhook raw-body plug
   ]
@@ -228,9 +228,11 @@ end
 Event types: `:accepted`, `:delivered`, `:deferred`, `:bounced` (with
 `bounce_type: :hard | :soft` and `reason`), `:complained`, `:opened`,
 `:clicked` (with `url`), `:unsubscribed`, `:rejected`, `:other`. Signatures
-are verified for Mailgun, SendGrid, Resend, Mandrill, MailPace, Postal and
-Facteur, and basic-auth / fixed-header checks for Postmark, SparkPost and
-SMTP2GO, whenever the key is configured.
+are verified for Mailgun, SendGrid, Resend, Mandrill, MailPace, Postal,
+Facteur and SES (the SNS signature plus an allowed `topic_arn`, since any
+AWS account can sign a message to your URL), and basic-auth / bearer /
+fixed-header checks for Postmark, Brevo, SparkPost and SMTP2GO, whenever the
+key is configured.
 
 ## Telemetry
 

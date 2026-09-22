@@ -1,10 +1,19 @@
 # Changelog
 
-## Unreleased
+## 0.2.1 — 2026-09-22
 
 - `Mailixir.Adapters.Facteur` accepts a `:list_unsubscribe` provider option
   (`:facteur`, `:none`, or `%{url: …, mailto: …}`) for Facteur's
   `list_unsubscribe` send field.
+- `Mailixir.Webhooks.SES` verifies SNS signatures (versions 1 and 2) when
+  given `topic_arn:` — one ARN or a list — and refuses any other topic. The
+  signing certificate must come from an `sns.<region>.amazonaws.com` `.pem`
+  URL over HTTPS; it is fetched with `:req_options` and cached per URL. A
+  failed fetch is a `:transport` error so the endpoint can answer 5xx and
+  let SNS retry. Without `topic_arn:` nothing changes.
+- `Mailixir.Webhooks.Brevo` checks `basic_auth: {user, password}` (Brevo
+  sends credentials embedded in the webhook URL) or `bearer_token:` (Brevo's
+  `auth: %{type: "bearer"}` webhook option).
 
 ## 0.2.0 — 2026-09-22
 

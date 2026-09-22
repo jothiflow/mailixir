@@ -27,8 +27,8 @@ defmodule Mailixir.Webhook do
   | `Mailixir.Webhooks.Postmark`        | HTTP basic auth (`:basic_auth`)                |
   | `Mailixir.Webhooks.Mandrill`        | HMAC-SHA1 (`:webhook_key`, `:url`)             |
   | `Mailixir.Webhooks.Mailjet`         | none offered by the provider                   |
-  | `Mailixir.Webhooks.Brevo`           | none offered by the provider                   |
-  | `Mailixir.Webhooks.SES`             | SNS envelope; verify SNS signatures upstream   |
+  | `Mailixir.Webhooks.Brevo`           | HTTP basic auth or bearer token (`:basic_auth`, `:bearer_token`) |
+  | `Mailixir.Webhooks.SES`             | SNS signature + topic (`:topic_arn`)           |
   | `Mailixir.Webhooks.SparkPost`       | HTTP basic auth or auth token header           |
   | `Mailixir.Webhooks.Mailtrap`        | none offered by the provider                   |
   | `Mailixir.Webhooks.MailPace`        | Ed25519 (`:public_key`)                        |
