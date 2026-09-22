@@ -297,6 +297,14 @@ defmodule MyApp.Webhooks.Custom do
 end
 ```
 
+## Related
+
+- [Facteur](https://github.com/jothiflow/facteur) — self-hosted delivery
+  platform, reached through `Mailixir.Adapters.Facteur`. Its
+  [`docs/stack.md`](https://github.com/jothiflow/facteur/blob/main/docs/stack.md)
+  says which concerns belong to mailixir, Facteur and the Héraut notification
+  engine, and how to use them together.
+
 ## License
 
 MIT
