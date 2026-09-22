@@ -1,6 +1,6 @@
 # Mailixir
 
-[![CI](https://github.com/florentroques/mailixir/actions/workflows/ci.yml/badge.svg)](https://github.com/florentroques/mailixir/actions/workflows/ci.yml)
+[![CI](https://github.com/jothiflow/mailixir/actions/workflows/ci.yml/badge.svg)](https://github.com/jothiflow/mailixir/actions/workflows/ci.yml)
 [![Hex.pm](https://img.shields.io/hexpm/v/mailixir.svg)](https://hex.pm/packages/mailixir)
 [![Docs](https://img.shields.io/badge/hex-docs-blue.svg)](https://hexdocs.pm/mailixir)
 

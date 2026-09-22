@@ -2,7 +2,7 @@ defmodule Mailixir.MixProject do
   use Mix.Project
 
   @version "0.2.0"
-  @source_url "https://github.com/florentroques/mailixir"
+  @source_url "https://github.com/jothiflow/mailixir"
 
   def project do
     [

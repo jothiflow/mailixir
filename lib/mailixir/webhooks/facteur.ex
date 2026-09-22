@@ -1,6 +1,6 @@
 defmodule Mailixir.Webhooks.Facteur do
   @moduledoc """
-  Parses [Facteur](https://github.com/florentroques/facteur) webhooks
+  Parses [Facteur](https://github.com/jothiflow/facteur) webhooks
   (one event per request).
 
   Verification: pass `secret:` — the endpoint secret shown when the webhook

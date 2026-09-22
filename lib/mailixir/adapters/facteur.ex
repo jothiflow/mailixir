@@ -1,6 +1,6 @@
 defmodule Mailixir.Adapters.Facteur do
   @moduledoc """
-  Adapter for [Facteur](https://github.com/florentroques/facteur), a
+  Adapter for [Facteur](https://github.com/jothiflow/facteur), a
   self-hosted delivery platform — `POST /api/v1/emails`.
 
   ## Configuration
