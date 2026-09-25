@@ -85,6 +85,38 @@ For each provider, check that:
 Fix whatever breaks, add a regression test with the real payload shape, then
 record the date and outcome here and tick the box in `../heraut/HANDOFF.md`.
 
+**Brevo, 2026-09-26: sends pass, webhooks not checked.** `jothiflow.com` is
+authenticated at Brevo (DKIM CNAMEs `brevo1`/`brevo2._domainkey`, a
+`brevo-code` TXT at the apex, the existing DMARC record). Both smoke emails,
+from `notifications@jothiflow.com`, landed in a Gmail inbox with
+`dkim=pass header.i=@jothiflow.com`, `dmarc=pass` and SPF passing on Brevo's
+return path; the metadata came back as `X-Mailin-Custom`. Two findings:
+
+- The inline image arrives as a plain attachment without a `Content-ID`, as
+  the adapter's moduledoc says; Brevo has no inline field.
+- **Brevo adds its own `List-Unsubscribe` and an open-tracking pixel.** The
+  adapter ignores `:list_unsubscribe` (only Facteur and MailPace honour it),
+  so account and security mail that fails over to Brevo carries Brevo's
+  unsubscribe, and a click blocklists the address inside Brevo where Héraut
+  cannot see it. Fix before Brevo is a production fallback.
+
+Still to do for Brevo: the webhook round trip.
+
+**Resend, 2026-09-26: sends pass, webhooks not checked.** `jothiflow.com`
+is verified at Resend in eu-west-1 (DKIM TXT `resend._domainkey`, CNAMEs
+`send` and `rsend` to `*.forge.rmta.net`, all DNS only). Both smoke emails
+landed in a Gmail inbox with `dkim=pass header.i=@jothiflow.com
+header.s=resend`, `dmarc=pass` and SPF passing on `rsend.jothiflow.com`.
+The inline image arrived correctly (`multipart/related`, `Content-ID`,
+`inline`), and Resend adds no `List-Unsubscribe`. Tags only come back on
+webhooks, so that part is unchecked. Before the domain verified, Resend
+answered `403 … domain is not verified`; `not_accepted?/1` does not fail
+over on that, so a misconfigured fallback stops the chain rather than
+passing to the next provider.
+
+Still to do for Resend: the webhook round trip. SES is not smoke-tested:
+no credentials were available.
+
 ### 3. Release and move the pins
 
 The unused `email` in `Flaky.deliver/2` is already `_email`. After step 2,
