@@ -16,10 +16,12 @@ defmodule Mailixir.Adapters.Fallback do
     * `:adapters` — required, a non-empty list of adapter configs (each with its
       own `:adapter` key; `{:system, ...}` values are resolved per attempt)
     * `:failover_on` — `(Mailixir.Error.t() -> boolean())` deciding whether an
-      error should trigger the next adapter. The default fails over on
-      `:transport` errors and on `:api_error` with no status, a 5xx status, or
-      429; 4xx errors are returned immediately since the next provider would
-      reject the same email.
+      error should trigger the next adapter. The default is
+      `Mailixir.Error.not_accepted?/1`: a connection-phase failure, 429, or
+      503. A timeout or any other 5xx is returned as-is, because the provider
+      may already have accepted the message and the next one cannot
+      deduplicate it. Other 4xx errors are returned immediately, since the
+      next provider would reject the same email.
 
   ## Telemetry
 
@@ -58,12 +60,13 @@ defmodule Mailixir.Adapters.Fallback do
     end
   end
 
-  @doc "Default failover policy: transport errors, 5xx, 429, or errors without a status."
+  @doc """
+  Default failover policy.
+
+  Delegates to `Mailixir.Error.not_accepted?/1`.
+  """
   @spec failover?(Error.t()) :: boolean()
-  def failover?(%Error{reason: :transport}), do: true
-  def failover?(%Error{reason: :api_error, status: nil}), do: true
-  def failover?(%Error{reason: :api_error, status: status}), do: status >= 500 or status == 429
-  def failover?(%Error{}), do: false
+  def failover?(%Error{} = error), do: Error.not_accepted?(error)
 
   defp attempt([{adapter, adapter_config}], email, _failover?, n, attempts) do
     case adapter.deliver(email, adapter_config) do

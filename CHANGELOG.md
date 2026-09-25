@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.0 — 2026-09-25
+
+- `Mailixir.Adapters.Fallback` no longer fails over on every transport error
+  and every 5xx. The default policy is `Mailixir.Error.not_accepted?/1`,
+  which is true only when the provider certainly did not accept the message:
+  a connection-phase failure (refused, DNS, unreachable host, TLS handshake),
+  429, or 503. A timeout, `:closed`, `:econnreset`, or any other 5xx is
+  returned so the caller retries the same provider with the same idempotency
+  key. Req 0.5 reports a connect timeout and a receive timeout as the same
+  `:timeout` reason, so a timeout is treated as ambiguous.
+  `Mailixir.Error.transport_reason/1` returns that reason without the caller
+  matching on a `Req` or Mint struct.
+
 ## 0.2.1 — 2026-09-22
 
 - `Mailixir.Adapters.Facteur` accepts a `:list_unsubscribe` provider option

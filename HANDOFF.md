@@ -5,15 +5,16 @@ explain. Authoritative for this repo; the platform-wide view is
 `../facteur/docs/handoff.md`, and which project owns which concern is
 `../facteur/docs/stack.md`.
 
-Last updated 2026-09-24, at commit `f2c4c00` (tag `v0.2.1`).
+Last updated 2026-09-25. `mix.exs` is `0.3.0`, not tagged; `origin/main` is
+still `f2c4c00` (`v0.2.1`). The Fallback change below is in the working tree.
 
 ## Where it stands
 
 Feature-complete for its perimeter: one `Email`, `deliver/2` and
 `deliver_many/2` over 21 adapters, webhook parsing into `Mailixir.Event` with
 signature or credential checks wherever the provider offers one,
-`Adapters.Fallback`, the dev mailbox and test assertions. **234 tests, 0
-failures.** The working tree is clean and in sync with `origin/main`.
+`Adapters.Fallback`, the dev mailbox and test assertions. **238 tests, 0
+failures.** Credo `--strict`, docs and dialyzer were clean on 2026-09-25.
 
 Héraut will call `Mailixir.deliver/2` from its own provider adapters, with
 **Facteur first and Resend, SES, Brevo as fallbacks**. Failover between them is
@@ -38,35 +39,23 @@ is rejected because the `gh` token lacks `workflow` scope.
 
 ## Next steps, in order
 
-### 1. Make `Adapters.Fallback` stop risking double sends
+### 1. Done — `Adapters.Fallback` no longer risks a double send
 
-`Fallback.failover?/1` fails over on **every** `:transport` error and **every**
-5xx. A receive timeout or a 500/502/504 does not prove the provider refused the
-message; it may have accepted it. The next provider cannot deduplicate, so the
-recipient gets the email twice. Héraut's rule (`../heraut/HANDOFF.md`,
-"Decided: email providers and failover") is the correct one, and any
-app using `Fallback` directly deserves the same:
+`Mailixir.Error.not_accepted?/1` is the policy, and `Fallback.failover?/1`
+delegates to it. Héraut's `DeliveryError.from_mailixir/1` calls it too
+(`transport_reason/1` supplies the code it stores, so it no longer matches
+on `Req` structs).
 
-- **Fail over** only when the provider certainly did not accept the message:
-  a connection-phase failure (refused, DNS, unreachable host, TLS handshake),
-  429 or 503.
-- **Do not fail over** on a receive timeout or any other 5xx. Return the error
-  so the caller retries the *same* provider with the *same* idempotency key.
-- 4xx: unchanged, return immediately.
-
-Suggested shape: a public classifier on `Mailixir.Error`, such as
-`not_accepted?/1` (name it as you see fit), which `Fallback.failover?/1`
-delegates to. Héraut can then call the same function instead of
-pattern-matching `Req.TransportError` reasons out of `details` itself.
-Today `HTTP.request/3` puts the raw `Req`/Mint exception in `details`, which is
-a leak of `Req` internals into every caller.
-
-Before writing it, check which `reason` values Req 0.5 / Finch / Mint actually
-produce. The open question is whether a connect timeout and a receive timeout
-can be told apart, or both surface as `:timeout`. If they cannot, treat
-`:timeout` as ambiguous (no failover). Cover each case in
-`test/mailixir/adapters/fallback_test.exs`. This changes default behaviour, so
-record it in `CHANGELOG.md` and release it as `v0.3.0`.
+Req 0.5, Finch and Mint report a connect timeout and a receive timeout as
+the same `Req.TransportError` reason, `:timeout`. They cannot be told apart,
+so `:timeout` does not fail over. Neither do `:closed`, `:econnreset`, or
+any 5xx other than 503. Failover is limited to a connection-phase failure
+(`:econnrefused`, `:nxdomain`, `:ehostunreach`, `:enetunreach`,
+`{:tls_alert, _}`, `:protocol_not_negotiated`, `{:bad_alpn_protocol, _}`),
+429, and 503. The same reasons are recognised on a gen_smtp
+`{:network_failure, host, {:error, reason}}` tuple. Covered in
+`test/mailixir/adapters/fallback_test.exs`. Recorded in `CHANGELOG.md` as
+`0.3.0`. Not tagged — see step 3.
 
 ### 2. Smoke-test Resend, SES and Brevo against live accounts
 
@@ -96,18 +85,16 @@ For each provider, check that:
 Fix whatever breaks, add a regression test with the real payload shape, then
 record the date and outcome here and tick the box in `../heraut/HANDOFF.md`.
 
-### 3. Remove the test warning
+### 3. Release and move the pins
 
-`test/mailixir/adapters/fallback_test.exs:11`: `email` is unused in
-`Flaky.deliver/2`. Rename it to `_email`. CI does not fail on it, but it is the
-only warning in the suite.
-
-### 4. Release and move the pins
-
-After steps 1–3, tag the release and update every place that pins
-`tag: "v0.2.1"`: `README.md` (Installation), `../facteur/docs/stack.md`,
-`../facteur/docs/handoff.md` §3, and `../heraut/HANDOFF.md`. Facteur's contract
-and e2e tests pull the default branch, so run them once against the new code:
+The unused `email` in `Flaky.deliver/2` is already `_email`. After step 2,
+tag `v0.3.0` and update every place that pins `tag: "v0.2.1"`:
+`README.md` (Installation), `../facteur/docs/stack.md`,
+`../facteur/docs/handoff.md` §3, and `../heraut/HANDOFF.md`. Héraut's
+`mix.exs` currently uses `path: "../mailixir"` so it can call
+`not_accepted?/1` before the tag exists; that becomes the tag in this step.
+Facteur's contract and e2e tests pull the default branch, so run them once
+against the new code:
 
 ```sh
 cd ../facteur && MAILIXIR_PATH=../mailixir mix test

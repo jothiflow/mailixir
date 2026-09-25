@@ -194,8 +194,12 @@ config :my_app, MyApp.Mailer,
   ]
 ```
 
-Fails over on transport errors, 5xx and 429; 4xx responses are returned
-immediately because the next provider would reject the same email. Pass
+Fails over only when `Mailixir.Error.not_accepted?/1` is true: a
+connection-phase failure (refused, DNS, unreachable host, TLS handshake),
+429, or 503. A timeout or any other 5xx is returned instead, because the
+first provider may already have accepted the message and the next one
+cannot deduplicate it. Other 4xx responses are returned immediately,
+because the next provider would reject the same email. Pass
 `failover_on: fn error -> … end` to change the policy. Each failover emits
 `[:mailixir, :fallback, :failover]`.
 
