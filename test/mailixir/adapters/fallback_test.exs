@@ -21,6 +21,7 @@ defmodule Mailixir.Adapters.FallbackTest do
     defp result(:rate, _), do: http("slow down", 429)
     defp result(:server, config), do: http("boom", config[:status] || 500)
     defp result(:client, _), do: http("bad from", 422)
+    defp result(:unsupported, _), do: {:error, Error.new(:unsupported, "cannot express this", provider: :flaky)}
 
     defp transport(details, message) do
       {:error, Error.new(:transport, message, provider: :flaky, details: details)}
@@ -49,6 +50,12 @@ defmodule Mailixir.Adapters.FallbackTest do
              Mailixir.deliver(@email, config(a: :refused, b: :unavailable, c: :rate, d: :ok))
 
     for name <- [:a, :b, :c, :d], do: assert_received({:attempted, ^name})
+  end
+
+  test "fails over when an adapter cannot express the email" do
+    assert {:ok, %Response{id: :b}} = Mailixir.deliver(@email, config(a: :unsupported, b: :ok))
+    assert_received {:attempted, :a}
+    assert_received {:attempted, :b}
   end
 
   test "does not fail over when the provider may already have accepted" do
@@ -159,6 +166,12 @@ defmodule Mailixir.Adapters.FallbackTest do
       refused = transport(%Req.TransportError{reason: :econnrefused})
       assert Error.transport_reason(refused) == :econnrefused
       assert Error.transport_reason(http(503)) == nil
+    end
+
+    test "an unsupported email was never sent" do
+      error = Error.new(:unsupported, "cannot express this", provider: :brevo)
+      assert Error.not_accepted?(error)
+      assert Fallback.failover?(error)
     end
 
     test "429 and 503 were not accepted" do

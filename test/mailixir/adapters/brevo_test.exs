@@ -72,6 +72,70 @@ defmodule Mailixir.Adapters.BrevoTest do
     assert {:ok, %Response{id: "m"}} = Mailixir.deliver(email, config)
   end
 
+  describe "list_unsubscribe" do
+    test "a url and a mailto replace Brevo's header, with one-click", %{stub: stub, config: config} do
+      Req.Test.stub(stub, fn conn ->
+        assert json_body(conn)["headers"] == %{
+                 "List-Unsubscribe" => "<mailto:unsub@acme.com>, <https://acme.com/u/1>",
+                 "List-Unsubscribe-Post" => "List-Unsubscribe=One-Click"
+               }
+
+        Req.Test.json(conn, %{"messageId" => "m"})
+      end)
+
+      email =
+        Email.put_provider_option(minimal_email(), :list_unsubscribe, %{
+          url: "https://acme.com/u/1",
+          mailto: "unsub@acme.com"
+        })
+
+      assert {:ok, %Response{id: "m"}} = Mailixir.deliver(email, config)
+    end
+
+    test "a mailto alone gets no one-click header", %{stub: stub, config: config} do
+      Req.Test.stub(stub, fn conn ->
+        assert json_body(conn)["headers"] == %{"List-Unsubscribe" => "<mailto:unsub@acme.com>"}
+        Req.Test.json(conn, %{"messageId" => "m"})
+      end)
+
+      email = Email.put_provider_option(minimal_email(), :list_unsubscribe, mailto: "mailto:unsub@acme.com")
+      assert {:ok, _} = Mailixir.deliver(email, config)
+    end
+
+    test "sits alongside metadata and caller headers", %{stub: stub, config: config} do
+      Req.Test.stub(stub, fn conn ->
+        assert json_body(conn)["headers"] == %{
+                 "X-Campaign" => "onboarding",
+                 "X-Mailin-custom" => ~s({"user_id":"42"}),
+                 "List-Unsubscribe" => "<https://acme.com/u/1>",
+                 "List-Unsubscribe-Post" => "List-Unsubscribe=One-Click"
+               }
+
+        Req.Test.json(conn, %{"messageId" => "m"})
+      end)
+
+      email = Email.put_provider_option(full_email(), :list_unsubscribe, %{url: "https://acme.com/u/1"})
+      assert {:ok, _} = Mailixir.deliver(email, config)
+    end
+
+    test ":brevo leaves Brevo's own header", %{stub: stub, config: config} do
+      Req.Test.stub(stub, fn conn ->
+        refute Map.has_key?(json_body(conn), "headers")
+        Req.Test.json(conn, %{"messageId" => "m"})
+      end)
+
+      email = Email.put_provider_option(minimal_email(), :list_unsubscribe, :brevo)
+      assert {:ok, _} = Mailixir.deliver(email, config)
+    end
+
+    test ":none is unsupported and never reaches Brevo", %{config: config} do
+      email = Email.put_provider_option(minimal_email(), :list_unsubscribe, :none)
+
+      assert {:error, %Error{reason: :unsupported, provider: :brevo} = error} = Mailixir.deliver(email, config)
+      assert Error.not_accepted?(error)
+    end
+  end
+
   test "api error", %{stub: stub, config: config} do
     Req.Test.stub(stub, fn conn ->
       conn

@@ -12,6 +12,16 @@
   `:timeout` reason, so a timeout is treated as ambiguous.
   `Mailixir.Error.transport_reason/1` returns that reason without the caller
   matching on a `Req` or Mint struct.
+- `Mailixir.Error.not_accepted?/1` is also true for `:unsupported`: an
+  adapter returns it before making any request, so failing over is safe.
+- `Mailixir.Adapters.Brevo` accepts a `:list_unsubscribe` provider option.
+  Brevo adds its own `List-Unsubscribe` to every message and a click
+  blocklists the recipient inside Brevo. `%{url: …, mailto: …}` replaces it
+  (a URL also gets `List-Unsubscribe-Post: List-Unsubscribe=One-Click`),
+  checked against a live send on 2026-09-26. `:none` returns `:unsupported`
+  without calling Brevo, because removing the header needs Brevo's
+  Enterprise-only List-Help option; a fallback chain moves on to the next
+  provider.
 
 ## 0.2.1 — 2026-09-22
 

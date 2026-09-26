@@ -42,7 +42,10 @@ defmodule Mailixir.Error do
   @doc """
   Whether this error proves the provider did not accept the message.
 
-  True only for a connection-phase failure, HTTP 429, or HTTP 503. A
+  True only for an `:unsupported` error, a connection-phase failure, HTTP
+  429, or HTTP 503. An adapter returns `:unsupported` before making any
+  request, when it cannot express what the email asks for (for example
+  `list_unsubscribe: :none` on Brevo), so the next provider may try. A
   connection-phase failure is one of:
 
     * the connection was refused (`:econnrefused`)
@@ -67,6 +70,7 @@ defmodule Mailixir.Error do
   `{:network_failure, host, {:error, reason}}` tuple from gen_smtp.
   """
   @spec not_accepted?(t()) :: boolean()
+  def not_accepted?(%__MODULE__{reason: :unsupported}), do: true
   def not_accepted?(%__MODULE__{reason: :api_error, status: status}) when status in [429, 503], do: true
 
   def not_accepted?(%__MODULE__{reason: :transport, details: details}) do

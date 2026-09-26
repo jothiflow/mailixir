@@ -22,16 +22,34 @@ defmodule Mailixir.Adapters.Brevo do
 
     * `:scheduled_at` — ISO 8601 datetime string
     * `:batch_id` — groups scheduled emails for later cancellation
+    * `:list_unsubscribe` — who owns the `List-Unsubscribe` header. Brevo adds
+      its own to every message, and a click blocklists the recipient inside
+      Brevo. `%{url: "https://…", mailto: "…"}` (either or both) replaces it
+      with your own opt-out; a URL also gets `List-Unsubscribe-Post:
+      List-Unsubscribe=One-Click` (RFC 8058). `:none` returns an
+      `:unsupported` error without calling Brevo: removing the header needs
+      Brevo's Enterprise-only List-Help option, and
+      `Mailixir.Error.not_accepted?/1` lets a fallback chain move on. Omitted
+      or `:brevo`: Brevo's own link.
   """
 
   use Mailixir.Adapter, provider: :brevo, required_config: [:api_key]
 
   alias Mailixir.Adapter.HTTP
-  alias Mailixir.{Attachment, Email, Response}
+  alias Mailixir.{Attachment, Email, Error, Response}
 
   @default_base_url "https://api.brevo.com"
 
   @impl true
+  def deliver(%Email{provider_options: %{list_unsubscribe: :none}}, _config) do
+    {:error,
+     Error.new(
+       :unsupported,
+       "Brevo adds List-Unsubscribe to every message; :none needs its Enterprise List-Help option",
+       provider: provider()
+     )}
+  end
+
   def deliver(%Email{} = email, config) do
     with {:ok, response} <- HTTP.request(provider(), config, request_options(email, config)) do
       handle_response(response)
@@ -75,11 +93,32 @@ defmodule Mailixir.Adapters.Brevo do
 
   defp attachment(%Attachment{} = att), do: %{name: att.filename, content: Attachment.base64(att)}
 
-  defp headers(%Email{metadata: metadata} = email) when map_size(metadata) == 0, do: email.headers
-
   defp headers(%Email{} = email) do
-    Map.put(email.headers, "X-Mailin-custom", JSON.encode!(email.metadata))
+    email.headers
+    |> put_metadata(email.metadata)
+    |> Map.merge(list_unsubscribe(email.provider_options[:list_unsubscribe]))
   end
+
+  defp put_metadata(headers, metadata) when map_size(metadata) == 0, do: headers
+  defp put_metadata(headers, metadata), do: Map.put(headers, "X-Mailin-custom", JSON.encode!(metadata))
+
+  defp list_unsubscribe(link) when is_list(link), do: list_unsubscribe(Map.new(link))
+
+  defp list_unsubscribe(%{} = link) do
+    url = link[:url] || link["url"]
+    mailto = link[:mailto] || link["mailto"]
+    targets = [mailto && "<mailto:#{String.replace_prefix(mailto, "mailto:", "")}>", url && "<#{url}>"]
+
+    case Enum.reject(targets, &is_nil/1) do
+      [] -> %{}
+      targets -> Map.merge(%{"List-Unsubscribe" => Enum.join(targets, ", ")}, one_click(url))
+    end
+  end
+
+  defp list_unsubscribe(_brevo_default), do: %{}
+
+  defp one_click("https://" <> _), do: %{"List-Unsubscribe-Post" => "List-Unsubscribe=One-Click"}
+  defp one_click(_url), do: %{}
 
   defp handle_response(%Req.Response{status: status, body: %{"messageId" => id} = body})
        when status in 200..299 do
