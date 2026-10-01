@@ -5,16 +5,18 @@ explain. Authoritative for this repo; the platform-wide view is
 `../facteur/docs/handoff.md`, and which project owns which concern is
 `../facteur/docs/stack.md`.
 
-Last updated 2026-09-25. `mix.exs` is `0.3.0`, not tagged; `origin/main` is
-still `f2c4c00` (`v0.2.1`). The Fallback change below is in the working tree.
+Last updated 2026-10-01. `v0.3.0` is tagged and pushed (`b932e12`), and
+Facteur and Héraut both pin it. Docs, README and the other repos' HANDOFFs
+name that tag.
 
 ## Where it stands
 
 Feature-complete for its perimeter: one `Email`, `deliver/2` and
 `deliver_many/2` over 21 adapters, webhook parsing into `Mailixir.Event` with
 signature or credential checks wherever the provider offers one,
-`Adapters.Fallback`, the dev mailbox and test assertions. **238 tests, 0
-failures.** Credo `--strict`, docs and dialyzer were clean on 2026-09-25.
+`Adapters.Fallback`, the dev mailbox and test assertions. **245 tests, 0
+failures.** Compile with `--warnings-as-errors`, format and Credo `--strict`
+were clean on 2026-10-01 (docs and dialyzer last ran clean on 2026-09-25).
 
 Héraut will call `Mailixir.deliver/2` from its own provider adapters, with
 **Facteur first and Resend, SES, Brevo as fallbacks**. Failover between them is
@@ -55,7 +57,7 @@ any 5xx other than 503. Failover is limited to a connection-phase failure
 429, and 503. The same reasons are recognised on a gen_smtp
 `{:network_failure, host, {:error, reason}}` tuple. Covered in
 `test/mailixir/adapters/fallback_test.exs`. Recorded in `CHANGELOG.md` as
-`0.3.0`. Not tagged — see step 3.
+`0.3.0`, tagged 2026-10-01.
 
 ### 2. Smoke-test Resend, SES and Brevo against live accounts
 
@@ -94,11 +96,14 @@ return path; the metadata came back as `X-Mailin-Custom`. Two findings:
 
 - The inline image arrives as a plain attachment without a `Content-ID`, as
   the adapter's moduledoc says; Brevo has no inline field.
-- **Brevo adds its own `List-Unsubscribe` and an open-tracking pixel.** The
-  adapter ignores `:list_unsubscribe` (only Facteur and MailPace honour it),
-  so account and security mail that fails over to Brevo carries Brevo's
-  unsubscribe, and a click blocklists the address inside Brevo where Héraut
-  cannot see it. Fix before Brevo is a production fallback.
+- **Brevo adds its own `List-Unsubscribe` and an open-tracking pixel.** A
+  click blocklists the address inside Brevo where Héraut cannot see it.
+  **Fixed in `b932e12`:** the adapter now honours a `{url, mailto}`
+  `:list_unsubscribe`, which replaces Brevo's header (verified live). `"none"`
+  cannot be honoured without Brevo's Enterprise List-Help option, so the
+  adapter refuses it before any request, and `not_accepted?/1` treats that
+  `:unsupported` as never sent so a chain moves on. Account and security mail
+  (`"none"`) therefore skips Brevo. The open-tracking pixel is not addressed.
 
 Still to do for Brevo: the webhook round trip.
 
@@ -117,20 +122,16 @@ passing to the next provider.
 Still to do for Resend: the webhook round trip. SES is not smoke-tested:
 no credentials were available.
 
-### 3. Release and move the pins
+### 3. Done — released and pins moved (2026-10-01)
 
-The unused `email` in `Flaky.deliver/2` is already `_email`. After step 2,
-tag `v0.3.0` and update every place that pins `tag: "v0.2.1"`:
-`README.md` (Installation), `../facteur/docs/stack.md`,
-`../facteur/docs/handoff.md` §3, and `../heraut/HANDOFF.md`. Héraut's
-`mix.exs` currently uses `path: "../mailixir"` so it can call
-`not_accepted?/1` before the tag exists; that becomes the tag in this step.
-Facteur's contract and e2e tests pull the default branch, so run them once
-against the new code:
-
-```sh
-cd ../facteur && MAILIXIR_PATH=../mailixir mix test
-```
+`v0.3.0` is tagged at `b932e12` and pushed. `README.md`,
+`../facteur/docs/stack.md`, `../facteur/docs/handoff.md` and
+`../heraut/HANDOFF.md` name it. Héraut's `mix.exs` now depends on the tag
+instead of `path: "../mailixir"`, and Facteur's test-only dependency is
+pinned to `tag: "v0.3.0"` and by commit in `mix.lock`. Against it: Héraut
+`mix precommit` 530 tests, 0 failures, dialyzer clean; Facteur `mix precommit`
+454 tests, 0 failures, dialyzer clean (no `MAILIXIR_PATH`). Docker was
+needed for the databases.
 
 ### Later, only if needed
 
