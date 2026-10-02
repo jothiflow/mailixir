@@ -15,6 +15,11 @@ defmodule Mailixir.Webhooks.Facteur do
 
   Facteur reports a soft asynchronous bounce as `deferred`, so a `:bounced`
   event is always `bounce_type: :hard`.
+
+  `opened` and `clicked` exist only for messages sent with `track: true`; a
+  `:clicked` event carries the destination in `:url`. Facteur records every
+  hit and deduplicates none, and mailbox image prefetch and link scanners
+  trigger them, so treat both as signals, not as proof a person acted.
   """
 
   use Mailixir.Webhook, provider: :facteur
@@ -84,6 +89,7 @@ defmodule Mailixir.Webhooks.Facteur do
          recipient: get_in(body, ["recipient", "email"]),
          timestamp: iso8601(body["occurred_at"]),
          reason: data["response"] || data["reason"],
+         url: data["url"],
          tags: List.wrap(body["tags"]),
          metadata: body["metadata"] || %{},
          raw: body
@@ -100,6 +106,8 @@ defmodule Mailixir.Webhooks.Facteur do
   defp classify("bounced"), do: {:bounced, :hard}
   defp classify("complained"), do: {:complained, nil}
   defp classify("unsubscribed"), do: {:unsubscribed, nil}
+  defp classify("opened"), do: {:opened, nil}
+  defp classify("clicked"), do: {:clicked, nil}
   # Facteur never attempted this recipient (suppressed) or gave up on it (failed).
   defp classify("suppressed"), do: {:rejected, nil}
   defp classify("failed"), do: {:rejected, nil}

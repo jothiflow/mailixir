@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- `Mailixir.Webhooks.Facteur` maps Facteur's `opened` and `clicked` events to
+  `:opened` and `:clicked` (they were `:other`), and sets `:url` on a click.
+  Facteur sends them only for messages submitted with `track: true`.
+
 ## 0.3.0 — 2026-09-25
 
 - `Mailixir.Adapters.Fallback` no longer fails over on every transport error

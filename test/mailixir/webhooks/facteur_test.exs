@@ -56,6 +56,8 @@ defmodule Mailixir.Webhooks.FacteurTest do
           {"bounced", :bounced},
           {"complained", :complained},
           {"unsubscribed", :unsubscribed},
+          {"opened", :opened},
+          {"clicked", :clicked},
           {"suppressed", :rejected},
           {"failed", :rejected},
           {"something_new", :other}
@@ -63,6 +65,21 @@ defmodule Mailixir.Webhooks.FacteurTest do
       raw = body(facteur)
       assert {:ok, [%Event{type: ^expected}]} = Webhook.parse(Facteur, raw, signed(raw), secret: @secret)
     end
+  end
+
+  test "a click carries its destination, an open has none" do
+    clicked = body("clicked", %{"url" => "https://example.org/offer?a=1", "user_agent" => "Mail/1"})
+
+    assert {:ok, [%Event{type: :clicked, url: "https://example.org/offer?a=1"} = e]} =
+             Webhook.parse(Facteur, clicked, signed(clicked), secret: @secret)
+
+    assert e.recipient == "jane@example.com"
+    assert e.raw["data"]["user_agent"] == "Mail/1"
+
+    opened = body("opened", %{"user_agent" => "Mail/1"})
+
+    assert {:ok, [%Event{type: :opened, url: nil}]} =
+             Webhook.parse(Facteur, opened, signed(opened), secret: @secret)
   end
 
   test "reason falls back to data.reason" do
