@@ -25,3 +25,5 @@ mailixir-*.tar
 
 # macOS
 .DS_Store
+lib/.DS_Store
+test/.DS_Store
