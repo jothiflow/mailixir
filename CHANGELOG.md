@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.1 — 2026-10-02
 
 - `Mailixir.Webhooks.Facteur` maps Facteur's `opened` and `clicked` events to
   `:opened` and `:clicked` (they were `:other`), and sets `:url` on a click.

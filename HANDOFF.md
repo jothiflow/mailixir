@@ -5,9 +5,10 @@ explain. Authoritative for this repo; the platform-wide view is
 `../facteur/docs/handoff.md`, and which project owns which concern is
 `../facteur/docs/stack.md`.
 
-Last updated 2026-10-01. `v0.3.0` is tagged and pushed (`b932e12`), and
-Facteur and Héraut both pin it. Docs, README and the other repos' HANDOFFs
-name that tag.
+Last updated 2026-10-02. `v0.3.1` is tagged and pushed; it adds the
+`:opened` and `:clicked` mapping to `Mailixir.Webhooks.Facteur` for
+Facteur's new tracking events. Facteur and Héraut still pin `v0.3.0` (commit
+`b932e12`) until their pins are moved; `README.md` names `v0.3.1`.
 
 ## Where it stands
 

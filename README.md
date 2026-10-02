@@ -61,7 +61,7 @@ Mailixir is not on Hex yet; depend on a release tag:
 ```elixir
 def deps do
   [
-    {:mailixir, github: "jothiflow/mailixir", tag: "v0.3.0"},
+    {:mailixir, github: "jothiflow/mailixir", tag: "v0.3.1"},
     {:gen_smtp, "~> 1.2"},  # only for Mailixir.Adapters.SMTP
     {:plug, "~> 1.14"}      # only for the dev mailbox UI / webhook raw-body plug
   ]
